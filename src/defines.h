@@ -26,13 +26,13 @@
 // ================================================
 
 // Set parameters of IMU and board used
-#define IMU IMU_ICM42688
-#define SECOND_IMU IMU_ICM42688
-#define BOARD BOARD_SLIMEVR
-#define IMU_ROTATION DEG_270
-#define SECOND_IMU_ROTATION DEG_270
+#define IMU IMU_LSM6DSV
+#define SECOND_IMU IMU_LSM6DSV
+#define BOARD BOARD_NODEMCU
+#define IMU_ROTATION DEG_180
+#define SECOND_IMU_ROTATION DEG_180
 
-#define PRIMARY_IMU_OPTIONAL false
+#define PRIMARY_IMU_OPTIONAL true
 #define SECONDARY_IMU_OPTIONAL true
 
 #define MAX_IMU_COUNT 2
@@ -63,7 +63,7 @@ IMU_DESC_ENTRY(IMU_BMP160, PRIMARY_IMU_ADDRESS_ONE, IMU_ROTATION, PIN_IMU_SCL, P
 // For other boards you can now adjust the other resistor values.
 // The diagram looks like this:
 //   (Battery)--- [BATTERY_SHIELD_RESISTANCE] ---(INPUT_BOARD)---  [BATTERY_SHIELD_R2] ---(ESP32_INPUT)--- [BATTERY_SHIELD_R1] --- (GND)
-// #define BATTERY_SHIELD_RESISTANCE 180 //130k BatteryShield, 180k SlimeVR or fill in external resistor value in kOhm
+ #define BATTERY_SHIELD_RESISTANCE 180 //130k BatteryShield, 180k SlimeVR or fill in external resistor value in kOhm
 // #define BATTERY_SHIELD_R1 100 // Board voltage divider resistor Ain to GND in kOhm
 // #define BATTERY_SHIELD_R2 220 // Board voltage divider resistor Ain to INPUT_BOARD in kOhm
 
