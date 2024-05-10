@@ -116,7 +116,7 @@ class SoftFusionSensor : public Sensor
         m_fusion.updateGyro(scaledData, m_calibration.G_Ts);
     }
 
-    void eatSamplesForSeconds(const size_t seconds) {
+    void eatSamplesForSeconds(const uint32_t seconds) {
         const auto targetDelay = millis() + 1000 * seconds;
         auto lastSecondsRemaining = seconds;
         while (millis() < targetDelay)
@@ -133,11 +133,11 @@ class SoftFusionSensor : public Sensor
         }
     }
 
-    std::pair<RawVectorT, RawVectorT> eatSamplesReturnLast(const size_t seconds)
+    std::pair<RawVectorT, RawVectorT> eatSamplesReturnLast(const uint32_t milliseconds)
     {
         RawVectorT accel = {0};
         RawVectorT gyro = {0};
-        const auto targetDelay = millis() + 1000 * seconds;
+        const auto targetDelay = millis() + milliseconds;
         while (millis() < targetDelay)
         {
             m_sensor.bulkRead(
@@ -181,6 +181,7 @@ public:
             );
             optimistic_yield(100);
             if (!m_fusion.isUpdated()) return;
+            hadData = true;
             m_fusion.clearUpdated();
         }
 
@@ -193,7 +194,7 @@ public:
         if (elapsed >= sendInterval) {
             m_lastRotationPacketSent = now - (elapsed - sendInterval);
 
-            setFusedRotation(m_fusion.getQuaternionQuat() * sensorOffset);
+            setFusedRotation(m_fusion.getQuaternionQuat());
             setAcceleration(m_fusion.getLinearAccVec());
             optimistic_yield(100);
         }
@@ -243,14 +244,14 @@ public:
 
         m_status = SensorStatus::SENSOR_OK;
         working = true;
-        [[maybe_unused]] auto lastRawSample = eatSamplesReturnLast(1);
+        [[maybe_unused]] auto lastRawSample = eatSamplesReturnLast(1000);
         if constexpr(UpsideDownCalibrationInit) {
             auto gravity = static_cast<sensor_real_t>(AScale * static_cast<sensor_real_t>(lastRawSample.first[2]));
             m_Logger.info("Gravity read: %.1f (need < -7.5 to start calibration)", gravity);
             if (gravity < -7.5f) {
                 ledManager.on();
                 m_Logger.info("Flip front in 5 seconds to start calibration");
-                lastRawSample = eatSamplesReturnLast(5);
+                lastRawSample = eatSamplesReturnLast(5000);
                 gravity = static_cast<sensor_real_t>(AScale * static_cast<sensor_real_t>(lastRawSample.first[2]));
                 if (gravity > 7.5f) {
                     m_Logger.debug("Starting calibration...");
@@ -378,7 +379,7 @@ public:
         uint16_t numCurrentPositionSamples = 0;
         bool waitForMotion = true;
 
-        float* accelCalibrationChunk = new float[numSamplesPerPosition * 3];
+        auto accelCalibrationChunk = std::make_unique<float[]>(numSamplesPerPosition * 3);
         ledManager.pattern(100, 100, 6);
         ledManager.on();
         m_Logger.info("Gathering accelerometer data...");
@@ -438,7 +439,7 @@ public:
         }
         ledManager.off();
         m_Logger.debug("Calculating accelerometer calibration data...");
-        delete[] accelCalibrationChunk;
+        accelCalibrationChunk.reset();
 
         float A_BAinv[4][3];
         magneto->current_calibration(A_BAinv);
